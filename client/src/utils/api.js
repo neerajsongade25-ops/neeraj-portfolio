@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// In production (Vercel): VITE_API_URL = https://your-render-app.onrender.com/api
+// In development: falls back to /api which Vite proxies to localhost:5000
 const API = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 10000,
 });
 
@@ -49,5 +51,31 @@ export const submitContact = (data) => API.post('/contact', data);
 export const getMessages = () => API.get('/contact/messages');
 export const markMessageRead = (id) => API.patch(`/contact/messages/${id}/read`);
 export const deleteMessage = (id) => API.delete(`/contact/messages/${id}`);
+
+// Resume
+export const getResumeStatus = () => API.get('/resume/status');
+export const uploadResume = (file) => {
+  const formData = new FormData();
+  formData.append('resume', file);
+  return API.post('/resume/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  });
+};
+export const deleteResume = () => API.delete('/resume');
+
+// Achievements
+export const getAchievements = () => API.get('/achievements');
+export const createAchievement = (formData) =>
+  API.post('/achievements', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  });
+export const updateAchievement = (id, formData) =>
+  API.put(`/achievements/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  });
+export const deleteAchievement = (id) => API.delete(`/achievements/${id}`);
 
 export default API;

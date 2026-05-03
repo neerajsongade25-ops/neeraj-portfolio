@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX, FiCode } from 'react-icons/fi';
+import { FiMenu, FiX, FiCode, FiDownload } from 'react-icons/fi';
 
 const navLinks = [
   { id: 'home', label: 'Home' },
@@ -97,6 +97,26 @@ const Navbar = () => {
             </button>
           ))}
           <motion.a
+            href="/resume.pdf"
+            download="Neeraj_Songade_Resume.pdf"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(155,89,182,0.15))',
+              border: '1px solid rgba(0,212,255,0.3)',
+              color: '#00d4ff',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <FiDownload size={14} /> Resume
+          </motion.a>
+          <motion.a
             href="/admin/login"
             whileHover={{ scale: 1.05 }}
             style={{
@@ -163,6 +183,17 @@ const Navbar = () => {
                 {link.label}
               </button>
             ))}
+            <a
+              href="/resume.pdf"
+              download="Neeraj_Songade_Resume.pdf"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                color: '#00ff88', textDecoration: 'none', fontWeight: 600,
+                padding: '8px 0',
+              }}
+            >
+              <FiDownload size={14} /> Download Resume
+            </a>
             <a href="/admin/login" style={{ color: '#00d4ff', textDecoration: 'none', fontWeight: 600 }}>
               Admin Panel
             </a>

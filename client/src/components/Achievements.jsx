@@ -1,47 +1,121 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { getAchievements } from '../utils/api';
 
-const achievements = [
-  {
-    icon: '🎨',
-    title: 'Best UI/UX Award',
-    subtitle: 'MediTrack Project',
-    description: 'Recognized for outstanding user interface design and exceptional user experience in the MediTrack veterinary management system.',
-    gradient: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(155,89,182,0.15))',
-    accentColor: '#00d4ff',
-    year: '2024',
-  },
-  {
-    icon: '🏆',
-    title: '1st Place – PPT Competition',
-    subtitle: 'National Science Day, OIST',
-    description: 'Won first place in PowerPoint presentation competition at the national level during National Science Day celebrations at OIST.',
-    gradient: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15))',
-    accentColor: '#ffd700',
-    year: '2024',
-  },
-  {
-    icon: '🤝',
-    title: '25+ Placement Drives',
-    subtitle: 'Volunteer Work',
-    description: 'Actively volunteered and coordinated in over 25 campus placement drives, helping students prepare and connect with recruiters.',
-    gradient: 'linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,212,255,0.15))',
-    accentColor: '#00ff88',
-    year: '2023-2024',
-  },
-  {
-    icon: '📜',
-    title: 'NPTEL Certification',
-    subtitle: 'Machine Learning',
-    description: 'Successfully completed NPTEL Machine Learning course certification, demonstrating proficiency in ML concepts and data analytics.',
-    gradient: 'linear-gradient(135deg, rgba(233,30,140,0.15), rgba(155,89,182,0.15))',
-    accentColor: '#e91e8c',
-    year: '2024',
-  },
-];
+const CertificateButtons = ({ achievement }) => {
+  // Support Cloudinary URL (new) and legacy local path (existing DB docs)
+  const certUrl = achievement.certificateUrl
+    || (achievement.certificateFile ? `/certificates/${achievement.certificateFile}` : null);
+
+  if (!certUrl) return null;
+
+  const isPdf = certUrl.toLowerCase().includes('.pdf') ||
+    (achievement.certificateResourceType === 'raw');
+
+  return (
+    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+      {/* View */}
+      <a
+        href={certUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+          padding: '5px 12px',
+          borderRadius: '8px',
+          background: `${achievement.accentColor}18`,
+          border: `1px solid ${achievement.accentColor}44`,
+          color: achievement.accentColor,
+          textDecoration: 'none',
+          fontSize: '0.78rem',
+          fontWeight: 600,
+          letterSpacing: '0.3px',
+          transition: 'all 0.2s ease',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = `${achievement.accentColor}28`;
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = `${achievement.accentColor}18`;
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <span style={{ fontSize: '0.85rem' }}>👁</span>
+        View Certificate
+      </a>
+
+      {/* Download */}
+      <a
+        href={certUrl}
+        download={`${achievement.title.replace(/\s+/g, '_')}_Certificate${isPdf ? '.pdf' : ''}`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+          padding: '5px 12px',
+          borderRadius: '8px',
+          background: 'rgba(0,255,136,0.08)',
+          border: '1px solid rgba(0,255,136,0.25)',
+          color: '#00ff88',
+          textDecoration: 'none',
+          fontSize: '0.78rem',
+          fontWeight: 600,
+          letterSpacing: '0.3px',
+          transition: 'all 0.2s ease',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = 'rgba(0,255,136,0.16)';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = 'rgba(0,255,136,0.08)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <span style={{ fontSize: '0.85rem' }}>⬇</span>
+        Download
+      </a>
+    </div>
+  );
+};
+
+// Skeleton card while loading
+const SkeletonCard = () => (
+  <div
+    className="glass-card"
+    style={{ padding: '1.75rem', position: 'relative', overflow: 'hidden' }}
+  >
+    <div style={{ position: 'absolute', top: '1rem', right: '1rem', width: 50, height: 20, borderRadius: 10, background: 'rgba(255,255,255,0.06)' }} />
+    <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,0.06)', marginBottom: '1.25rem' }} />
+    <div style={{ height: 18, width: '70%', borderRadius: 8, background: 'rgba(255,255,255,0.06)', marginBottom: '0.6rem' }} />
+    <div style={{ height: 13, width: '45%', borderRadius: 8, background: 'rgba(255,255,255,0.04)', marginBottom: '0.9rem' }} />
+    <div style={{ height: 12, width: '100%', borderRadius: 8, background: 'rgba(255,255,255,0.04)', marginBottom: '0.4rem' }} />
+    <div style={{ height: 12, width: '85%', borderRadius: 8, background: 'rgba(255,255,255,0.04)', marginBottom: '0.4rem' }} />
+    <div style={{ height: 12, width: '60%', borderRadius: 8, background: 'rgba(255,255,255,0.04)' }} />
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.04)', borderRadius: '0 0 16px 16px' }} />
+  </div>
+);
 
 const Achievements = () => {
+  const [achievements, setAchievements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
+
+  useEffect(() => {
+    getAchievements()
+      .then(r => setAchievements(r.data.data || []))
+      .catch(err => {
+        console.error('Failed to load achievements:', err);
+        setAchievements([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <section
@@ -91,74 +165,80 @@ const Achievements = () => {
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: '1.5rem',
       }}>
-        {achievements.map((achievement, index) => (
-          <motion.div
-            key={achievement.title}
-            className="glass-card"
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
-            animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
-            transition={{ duration: 0.6, delay: index * 0.12 }}
-            style={{ padding: '1.75rem', position: 'relative', overflow: 'visible' }}
-          >
-            {/* Year badge */}
-            <span style={{
-              position: 'absolute',
-              top: '1rem', right: '1rem',
-              padding: '3px 10px',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              fontSize: '0.75rem',
-              color: '#8892b0',
-              fontFamily: 'JetBrains Mono, monospace',
-            }}>
-              {achievement.year}
-            </span>
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          : achievements.map((achievement, index) => (
+            <motion.div
+              key={achievement._id}
+              className="glass-card"
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+              transition={{ duration: 0.6, delay: index * 0.12 }}
+              style={{ padding: '1.75rem', position: 'relative', overflow: 'visible' }}
+            >
+              {/* Year badge */}
+              <span style={{
+                position: 'absolute',
+                top: '1rem', right: '1rem',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                fontSize: '0.75rem',
+                color: '#8892b0',
+                fontFamily: 'JetBrains Mono, monospace',
+              }}>
+                {achievement.year}
+              </span>
 
-            {/* Icon */}
-            <div style={{
-              width: 56, height: 56,
-              borderRadius: '16px',
-              background: achievement.gradient,
-              border: `1px solid ${achievement.accentColor}33`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.6rem',
-              marginBottom: '1.25rem',
-              boxShadow: `0 4px 20px ${achievement.accentColor}22`,
-            }}>
-              {achievement.icon}
-            </div>
+              {/* Icon */}
+              <div style={{
+                width: 56, height: 56,
+                borderRadius: '16px',
+                background: achievement.gradient,
+                border: `1px solid ${achievement.accentColor}33`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.6rem',
+                marginBottom: '1.25rem',
+                boxShadow: `0 4px 20px ${achievement.accentColor}22`,
+              }}>
+                {achievement.icon}
+              </div>
 
-            <h3 style={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 700, fontSize: '1.1rem',
-              color: '#f0f0f5', marginBottom: '0.35rem',
-            }}>
-              {achievement.title}
-            </h3>
-            <p style={{
-              color: achievement.accentColor,
-              fontSize: '0.83rem',
-              fontWeight: 600,
-              marginBottom: '0.75rem',
-              letterSpacing: '0.3px',
-            }}>
-              {achievement.subtitle}
-            </p>
-            <p style={{ color: '#8892b0', fontSize: '0.87rem', lineHeight: 1.7 }}>
-              {achievement.description}
-            </p>
+              <h3 style={{
+                fontFamily: 'Space Grotesk, sans-serif',
+                fontWeight: 700, fontSize: '1.1rem',
+                color: '#f0f0f5', marginBottom: '0.35rem',
+              }}>
+                {achievement.title}
+              </h3>
+              <p style={{
+                color: achievement.accentColor,
+                fontSize: '0.83rem',
+                fontWeight: 600,
+                marginBottom: '0.75rem',
+                letterSpacing: '0.3px',
+              }}>
+                {achievement.subtitle}
+              </p>
+              <p style={{ color: '#8892b0', fontSize: '0.87rem', lineHeight: 1.7 }}>
+                {achievement.description}
+              </p>
 
-            {/* Bottom accent line */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0, left: 0, right: 0,
-              height: '2px',
-              background: achievement.gradient,
-              borderRadius: '0 0 16px 16px',
-            }} />
-          </motion.div>
-        ))}
+              {/* Certificate buttons — only shown if a certificate is attached */}
+              <CertificateButtons achievement={achievement} />
+
+              {/* Bottom accent line */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0, left: 0, right: 0,
+                height: '2px',
+                background: achievement.gradient,
+                borderRadius: '0 0 16px 16px',
+              }} />
+            </motion.div>
+          ))
+        }
       </div>
     </section>
   );

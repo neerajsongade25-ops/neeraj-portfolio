@@ -7,10 +7,10 @@ import toast from 'react-hot-toast';
 
 const contactInfo = [
   { icon: <FiMail />, label: 'Email', value: 'neerajsongade463@gmail.com', href: 'mailto:neerajsongade463@gmail.com' },
-  { icon: <FiPhone />, label: 'Phone', value: '+91 7999521688', href: 'tel:+917999521688' },
-  { icon: <FiMapPin />, label: 'Location', value: 'India', href: null },
-  { icon: <FiGithub />, label: 'GitHub', value: 'https://github.com/neerajsongade25-ops', href: 'https://https://github.com/neerajsongade25-ops' },
-  { icon: <FiLinkedin />, label: 'LinkedIn', value: 'linkedin.com/in/neeraj-songade', href: 'https://linkedin.com/in/neeraj-songade' },
+  { icon: <FiPhone />, label: 'Phone', value: '+91 7999521689', href: 'tel:+917999521689' },
+  { icon: <FiMapPin />, label: 'Location', value: 'Bhopal (M.P), India', href: null },
+  { icon: <FiGithub />, label: 'GitHub', value: 'https://github.com/neerajsongade25-ops', href: 'https://github.com/neerajsongade25-ops' },
+  { icon: <FiLinkedin />, label: 'LinkedIn', value: 'linkedin.com/in/neeraj-songade', href: 'https://www.linkedin.com/in/neeraj-songade-3a787b315' },
 ];
 
 const Contact = () => {

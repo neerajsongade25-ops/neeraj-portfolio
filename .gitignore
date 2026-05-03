@@ -7,6 +7,9 @@ build/
 .env
 .env.local
 .env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Logs
 *.log
@@ -19,3 +22,8 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Uploaded files (local disk — not used in production with Cloudinary)
+uploads/
+server/uploads/
+client/public/certificates/

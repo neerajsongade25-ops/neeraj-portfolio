@@ -12,7 +12,7 @@ const fallbackProjects = [
     longDescription: 'A comprehensive veterinary clinic management platform built using the MERN stack. Features include JWT authentication, REST APIs, dashboard analytics, billing system, and role-based access for Admin, Doctor, Nurse, Receptionist, and Owner roles.',
     techStack: ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'JWT', 'Tailwind CSS'],
     category: 'Full Stack',
-    githubUrl: 'https://https://github.com/neerajsongade25-ops25-ops',
+    githubUrl: 'https://github.com/neerajsongade25-ops',
     featured: true,
   },
   {
@@ -22,7 +22,7 @@ const fallbackProjects = [
     longDescription: 'An IoT-powered groundwater monitoring platform that provides real-time data visualization, predictive analytics using ML models, geospatial mapping, and alerts for policymakers and researchers.',
     techStack: ['React.js', 'Node.js', 'Socket.io', 'MongoDB', 'Python', 'Leaflet.js'],
     category: 'Full Stack',
-    githubUrl: 'https://https://github.com/neerajsongade25-ops25-ops',
+    githubUrl: 'https://github.com/neerajsongade25-ops',
     featured: true,
   },
   {
@@ -291,7 +291,7 @@ const Projects = () => {
         style={{ textAlign: 'center', marginTop: '2.5rem' }}
       >
         <a
-          href="https://https://github.com/neerajsongade25-ops25-ops"
+          href="https://github.com/neerajsongade25-ops"
           target="_blank"
           rel="noopener noreferrer"
           style={{

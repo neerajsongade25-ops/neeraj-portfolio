@@ -1,13 +1,8 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { FiCode, FiDatabase, FiCpu, FiAward } from 'react-icons/fi';
-
-const stats = [
-  { value: '2+', label: 'Projects Built', icon: <FiCode /> },
-  { value: '25+', label: 'Events Volunteered', icon: <FiAward /> },
-  { value: '5+', label: 'Tech Stacks', icon: <FiCpu /> },
-  { value: '1st', label: 'National PPT Award', icon: <FiAward /> },
-];
+import { FiCode, FiCpu, FiAward } from 'react-icons/fi';
+import { getProjects } from '../utils/api';
 
 const highlights = [
   { icon: '🎯', title: 'DSA & Algorithms', desc: 'Strong problem-solving with Data Structures and Algorithms' },
@@ -20,6 +15,23 @@ const highlights = [
 
 const About = () => {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [projectCount, setProjectCount] = useState(null);
+
+  useEffect(() => {
+    getProjects()
+      .then(res => {
+        const count = (res.data.data || []).length;
+        setProjectCount(count > 0 ? `${count}+` : '4+');
+      })
+      .catch(() => setProjectCount('4+'));
+  }, []);
+
+  const stats = [
+    { value: projectCount ?? '…', label: 'Projects Built', icon: <FiCode /> },
+    { value: '25+', label: 'Events Volunteered', icon: <FiAward /> },
+    { value: '5+', label: 'Tech Stacks', icon: <FiCpu /> },
+    { value: '1st', label: 'National PPT Award', icon: <FiAward /> },
+  ];
 
   return (
     <section
@@ -92,7 +104,7 @@ const About = () => {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left' }}>
               {[
-                { label: '📍', value: 'India' },
+                { label: '📍', value: 'Bhopal (M.P), India' },
                 { label: '📧', value: 'neerajsongade463@gmail.com' },
                 { label: '📱', value: '+91 7999521688' },
               ].map((item) => (

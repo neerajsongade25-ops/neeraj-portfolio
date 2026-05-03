@@ -160,7 +160,7 @@ const Hero = () => {
           </motion.button>
           <motion.a
             href="/resume.pdf"
-            download
+            download="Neeraj_Songade_Resume.pdf"
             whileHover={{ scale: 1.05, y: -3 }}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
@@ -187,8 +187,8 @@ const Hero = () => {
           style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}
         >
           {[
-            { icon: <FiGithub size={20} />, href: 'https://https://github.com/neerajsongade25-ops25-ops', label: 'GitHub' },
-            { icon: <FiLinkedin size={20} />, href: 'https://www.linkedin.com/in/neeraj-songade-3a787b315/', label: 'LinkedIn' },
+            { icon: <FiGithub size={20} />, href: 'https://github.com/neerajsongade25-ops', label: 'GitHub' },
+            { icon: <FiLinkedin size={20} />, href: 'https://www.linkedin.com/in/neeraj-songade-3a787b315', label: 'LinkedIn' },
             { icon: <FiMail size={20} />, href: 'mailto:neerajsongade463@gmail.com', label: 'Email' },
           ].map((social) => (
             <motion.a

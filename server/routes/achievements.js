@@ -27,6 +27,42 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/achievements/:id/certificate?action=view|download
+// Server-side proxy: fetches the file from Cloudinary and serves it with
+// the correct Content-Type/Content-Disposition, bypassing browser CORS issues.
+router.get('/:id/certificate', async (req, res) => {
+  try {
+    const achievement = await Achievement.findById(req.params.id);
+    if (!achievement || !achievement.certificateUrl) {
+      return res.status(404).send('Certificate not found.');
+    }
+
+    const isPdf = achievement.certificateResourceType === 'raw';
+    let certUrl = achievement.certificateUrl;
+
+    // Ensure .pdf extension so Cloudinary returns correct content-type
+    if (isPdf && !certUrl.toLowerCase().endsWith('.pdf')) {
+      certUrl += '.pdf';
+    }
+
+    const safeName = achievement.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+    const filename = `${safeName}_Certificate${isPdf ? '.pdf' : ''}`;
+    const disposition = req.query.action === 'download' ? 'attachment' : 'inline';
+
+    const proto = certUrl.startsWith('https') ? require('https') : require('http');
+    proto.get(certUrl, (upstream) => {
+      res.setHeader('Content-Type', isPdf ? 'application/pdf' : (upstream.headers['content-type'] || 'application/octet-stream'));
+      res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
+      upstream.pipe(res);
+    }).on('error', (err) => {
+      console.error('Certificate proxy error:', err.message);
+      res.status(502).send('Failed to fetch certificate.');
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ─── PROTECTED ROUTES ─────────────────────────────────────────────────────────
 
 // POST /api/achievements — create new achievement (admin)

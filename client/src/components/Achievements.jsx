@@ -3,43 +3,11 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { getAchievements } from '../utils/api';
 
-// Normalize a Cloudinary raw PDF URL to ensure it ends with .pdf
-// Cloudinary serves raw assets with correct Content-Type only when the URL
-// includes the extension. Older uploads don't have it — we append it here.
-const normalizeCertUrl = (url, resourceType) => {
-  if (!url) return url;
-  // If it's already a raw Cloudinary asset without .pdf, append it
-  if (
-    resourceType === 'raw' &&
-    url.includes('res.cloudinary.com') &&
-    !url.toLowerCase().includes('.pdf')
-  ) {
-    return url + '.pdf';
-  }
-  return url;
-};
-
-// Download via fetch+blob so the file always saves with the correct filename
-const handleDownload = async (url, filename) => {
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(blobUrl);
-  } catch {
-    // Fallback: open directly
-    window.open(url, '_blank');
-  }
-};
+const API_BASE = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')  // strip trailing /api
+  : 'http://localhost:5000';
 
 const CertificateButtons = ({ achievement }) => {
-  // Support Cloudinary URL (new) and legacy local path (existing DB docs)
   const rawUrl = achievement.certificateUrl
     || (achievement.certificateFile ? `/certificates/${achievement.certificateFile}` : null);
 
@@ -49,39 +17,29 @@ const CertificateButtons = ({ achievement }) => {
     rawUrl.toLowerCase().includes('.pdf') ||
     achievement.certificateResourceType === 'raw';
 
-  // Ensure PDF URLs have .pdf extension for proper Cloudinary serving
-  const certUrl = isPdf
-    ? normalizeCertUrl(rawUrl, achievement.certificateResourceType)
+  // For PDFs: route through our server proxy so it fetches from Cloudinary
+  // server-to-server and returns with correct Content-Type headers.
+  // For images: direct Cloudinary URL works fine cross-origin.
+  const viewUrl = isPdf
+    ? `${API_BASE}/api/achievements/${achievement._id}/certificate?action=view`
+    : rawUrl;
+
+  const downloadUrl = isPdf
+    ? `${API_BASE}/api/achievements/${achievement._id}/certificate?action=download`
     : rawUrl;
 
   const downloadName = `${achievement.title.replace(/\s+/g, '_')}_Certificate${isPdf ? '.pdf' : ''}`;
 
-  // For PDFs: route through Google Docs Viewer which renders cross-origin
-  // PDFs server-side — bypasses Chrome's native PDF viewer CORS restrictions
-  // with Cloudinary raw assets entirely.
-  const viewUrl = isPdf
-    ? `https://docs.google.com/viewer?url=${encodeURIComponent(certUrl)}&embedded=false`
-    : certUrl;
-
-  // For download: use fl_attachment flag so Cloudinary sends the correct
-  // Content-Disposition: attachment header, forcing a true file download.
-  const downloadUrl = isPdf && certUrl.includes('res.cloudinary.com')
-    ? certUrl.replace('/raw/upload/', '/raw/upload/fl_attachment/')
-    : certUrl;
-
   return (
     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-      {/* View — PDFs via Google Docs Viewer, images open directly */}
+      {/* View — PDFs via server proxy (inline), images open directly */}
       <a
         href={viewUrl}
         target="_blank"
         rel="noopener noreferrer"
         style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '5px',
-          padding: '5px 12px',
-          borderRadius: '8px',
+          display: 'inline-flex', alignItems: 'center', gap: '5px',
+          padding: '5px 12px', borderRadius: '8px',
           background: `${achievement.accentColor}18`,
           border: `1px solid ${achievement.accentColor}44`,
           color: achievement.accentColor,
@@ -105,9 +63,10 @@ const CertificateButtons = ({ achievement }) => {
         View Certificate
       </a>
 
-      {/* Download — uses Cloudinary attachment flag for reliable download */}
+      {/* Download — server proxy sends Content-Disposition: attachment */}
       <a
         href={downloadUrl}
+        download={downloadName}
         target="_blank"
         rel="noopener noreferrer"
         style={{

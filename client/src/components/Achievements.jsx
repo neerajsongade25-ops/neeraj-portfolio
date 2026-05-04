@@ -3,15 +3,58 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { getAchievements } from '../utils/api';
 
+// Normalize a Cloudinary raw PDF URL to ensure it ends with .pdf
+// Cloudinary serves raw assets with correct Content-Type only when the URL
+// includes the extension. Older uploads don't have it — we append it here.
+const normalizeCertUrl = (url, resourceType) => {
+  if (!url) return url;
+  // If it's already a raw Cloudinary asset without .pdf, append it
+  if (
+    resourceType === 'raw' &&
+    url.includes('res.cloudinary.com') &&
+    !url.toLowerCase().includes('.pdf')
+  ) {
+    return url + '.pdf';
+  }
+  return url;
+};
+
+// Download via fetch+blob so the file always saves with the correct filename
+const handleDownload = async (url, filename) => {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch {
+    // Fallback: open directly
+    window.open(url, '_blank');
+  }
+};
+
 const CertificateButtons = ({ achievement }) => {
   // Support Cloudinary URL (new) and legacy local path (existing DB docs)
-  const certUrl = achievement.certificateUrl
+  const rawUrl = achievement.certificateUrl
     || (achievement.certificateFile ? `/certificates/${achievement.certificateFile}` : null);
 
-  if (!certUrl) return null;
+  if (!rawUrl) return null;
 
-  const isPdf = certUrl.toLowerCase().includes('.pdf') ||
-    (achievement.certificateResourceType === 'raw');
+  const isPdf =
+    rawUrl.toLowerCase().includes('.pdf') ||
+    achievement.certificateResourceType === 'raw';
+
+  // For existing raw PDFs without extension, fix the URL
+  const certUrl = isPdf
+    ? normalizeCertUrl(rawUrl, achievement.certificateResourceType)
+    : rawUrl;
+
+  const downloadName = `${achievement.title.replace(/\s+/g, '_')}_Certificate${isPdf ? '.pdf' : ''}`;
 
   return (
     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
@@ -49,10 +92,9 @@ const CertificateButtons = ({ achievement }) => {
         View Certificate
       </a>
 
-      {/* Download */}
-      <a
-        href={certUrl}
-        download={`${achievement.title.replace(/\s+/g, '_')}_Certificate${isPdf ? '.pdf' : ''}`}
+      {/* Download — uses fetch+blob for reliable filename + extension */}
+      <button
+        onClick={() => handleDownload(certUrl, downloadName)}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -68,6 +110,7 @@ const CertificateButtons = ({ achievement }) => {
           letterSpacing: '0.3px',
           transition: 'all 0.2s ease',
           cursor: 'pointer',
+          fontFamily: 'inherit',
         }}
         onMouseEnter={e => {
           e.currentTarget.style.background = 'rgba(0,255,136,0.16)';
@@ -80,7 +123,7 @@ const CertificateButtons = ({ achievement }) => {
       >
         <span style={{ fontSize: '0.85rem' }}>⬇</span>
         Download
-      </a>
+      </button>
     </div>
   );
 };

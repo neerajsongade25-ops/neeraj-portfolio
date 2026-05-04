@@ -41,6 +41,9 @@ const certificateStorage = new CloudinaryStorage({
       folder: 'neeraj_portfolio/certificates',
       public_id: `cert_${Date.now()}`,
       resource_type: isPdf ? 'raw' : 'image',
+      // For PDFs: appending the format ensures the URL ends in .pdf
+      // so browsers correctly identify and render/download the file.
+      ...(isPdf ? { format: 'pdf' } : {}),
       overwrite: false,
     };
   },

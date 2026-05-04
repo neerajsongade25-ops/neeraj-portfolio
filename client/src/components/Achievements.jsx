@@ -138,7 +138,7 @@ const CertificateButtons = ({ achievement }) => {
       >
         <span style={{ fontSize: '0.85rem' }}>⬇</span>
         Download
-      </button>
+      </a>
     </div>
   );
 };

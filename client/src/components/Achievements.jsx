@@ -49,18 +49,31 @@ const CertificateButtons = ({ achievement }) => {
     rawUrl.toLowerCase().includes('.pdf') ||
     achievement.certificateResourceType === 'raw';
 
-  // For existing raw PDFs without extension, fix the URL
+  // Ensure PDF URLs have .pdf extension for proper Cloudinary serving
   const certUrl = isPdf
     ? normalizeCertUrl(rawUrl, achievement.certificateResourceType)
     : rawUrl;
 
   const downloadName = `${achievement.title.replace(/\s+/g, '_')}_Certificate${isPdf ? '.pdf' : ''}`;
 
+  // For PDFs: route through Google Docs Viewer which renders cross-origin
+  // PDFs server-side — bypasses Chrome's native PDF viewer CORS restrictions
+  // with Cloudinary raw assets entirely.
+  const viewUrl = isPdf
+    ? `https://docs.google.com/viewer?url=${encodeURIComponent(certUrl)}&embedded=false`
+    : certUrl;
+
+  // For download: use fl_attachment flag so Cloudinary sends the correct
+  // Content-Disposition: attachment header, forcing a true file download.
+  const downloadUrl = isPdf && certUrl.includes('res.cloudinary.com')
+    ? certUrl.replace('/raw/upload/', '/raw/upload/fl_attachment/')
+    : certUrl;
+
   return (
     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-      {/* View */}
+      {/* View — PDFs via Google Docs Viewer, images open directly */}
       <a
-        href={certUrl}
+        href={viewUrl}
         target="_blank"
         rel="noopener noreferrer"
         style={{
@@ -92,9 +105,11 @@ const CertificateButtons = ({ achievement }) => {
         View Certificate
       </a>
 
-      {/* Download — uses fetch+blob for reliable filename + extension */}
-      <button
-        onClick={() => handleDownload(certUrl, downloadName)}
+      {/* Download — uses Cloudinary attachment flag for reliable download */}
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
           display: 'inline-flex',
           alignItems: 'center',

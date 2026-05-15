@@ -29,9 +29,7 @@ npm run dev
 - **Admin Login**: http://localhost:5173/admin/login
 - **API**: http://localhost:5000/api
 
-## 🔑 Admin Credentials (Default)
-- Email: `neerajsongade463@gmail.com`
-- Password: `admin123`
+
 
 > ⚠️ Change these in `server/.env` before deploying!
 
@@ -57,7 +55,4 @@ npm run dev
 | POST | /api/contact | No | Submit message |
 | GET | /api/contact/messages | Yes | View messages |
 
-## 🚢 Deployment
-- **Frontend**: Vercel — set `VITE_API_URL` env var
-- **Backend**: Render — set all `.env` variables
-- **Database**: MongoDB Atlas
+

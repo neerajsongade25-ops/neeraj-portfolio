@@ -4,16 +4,6 @@ const { cloudinary, resumeUpload } = require('../config/cloudinary');
 
 const router = express.Router();
 
-// Helper: build the Cloudinary URL for the resume (raw PDF)
-// Cloudinary raw URLs look like:
-// https://res.cloudinary.com/<cloud_name>/raw/upload/neeraj_portfolio/resume/resume.pdf
-const getResumeUrl = () =>
-  cloudinary.url('neeraj_portfolio/resume/resume', {
-    resource_type: 'raw',
-    format: 'pdf',
-    secure: true,
-  });
-
 // GET /api/resume/status — check if resume exists in Cloudinary
 router.get('/status', async (req, res) => {
   try {
@@ -21,10 +11,12 @@ router.get('/status', async (req, res) => {
       'neeraj_portfolio/resume/resume',
       { resource_type: 'raw' }
     );
+    // Use secure_url directly from Cloudinary's response — never regenerate
+    // it with cloudinary.url() + format param which creates an invalid signed URL.
     return res.json({
       success: true,
       exists: true,
-      url: getResumeUrl(),
+      url: result.secure_url,
       size: result.bytes,
       lastModified: result.created_at,
     });

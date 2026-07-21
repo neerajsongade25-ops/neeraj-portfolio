@@ -106,7 +106,7 @@ const About = () => {
               {[
                 { label: '📍', value: 'Bhopal (M.P), India' },
                 { label: '📧', value: 'neerajsongade463@gmail.com' },
-                { label: '📱', value: '+91 7999521688' },
+                { label: '📱', value: '+91 7999521689' },
               ].map((item) => (
                 <div key={item.label} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.83rem', color: '#8892b0' }}>
                   <span>{item.label}</span>

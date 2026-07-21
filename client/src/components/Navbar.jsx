@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiCode, FiDownload } from 'react-icons/fi';
+import useResumeUrl from '../utils/useResumeUrl';
 
 const navLinks = [
   { id: 'home', label: 'Home' },
@@ -15,6 +16,8 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState('home');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { resumeUrl, resumeExists, error: resumeError } = useResumeUrl();
+  const resumeAvailable = resumeExists && resumeUrl;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,10 +100,18 @@ const Navbar = () => {
             </button>
           ))}
           <motion.a
-            href="/resume.pdf"
-            download="Neeraj_Songade_Resume.pdf"
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.97 }}
+            href={resumeAvailable ? resumeUrl : undefined}
+            download={resumeAvailable ? 'Neeraj_Songade_Resume.pdf' : undefined}
+            target={resumeAvailable ? '_blank' : undefined}
+            rel="noopener noreferrer"
+            onClick={!resumeAvailable ? (e) => e.preventDefault() : undefined}
+            title={
+              resumeAvailable ? 'Download Resume'
+              : resumeError ? 'Resume unavailable — check admin panel'
+              : 'No resume uploaded yet'
+            }
+            whileHover={resumeAvailable ? { scale: 1.05, y: -2 } : {}}
+            whileTap={resumeAvailable ? { scale: 0.97 } : {}}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '8px 16px',
@@ -184,12 +195,22 @@ const Navbar = () => {
               </button>
             ))}
             <a
-              href="/resume.pdf"
-              download="Neeraj_Songade_Resume.pdf"
+              href={resumeAvailable ? resumeUrl : undefined}
+              download={resumeAvailable ? 'Neeraj_Songade_Resume.pdf' : undefined}
+              target={resumeAvailable ? '_blank' : undefined}
+              rel="noopener noreferrer"
+              onClick={!resumeAvailable ? (e) => e.preventDefault() : undefined}
+              title={
+                resumeAvailable ? 'Download Resume'
+                : resumeError ? 'Resume unavailable — check admin panel'
+                : 'No resume uploaded yet'
+              }
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
-                color: '#00ff88', textDecoration: 'none', fontWeight: 600,
+                color: resumeAvailable ? '#00ff88' : 'rgba(0,255,136,0.4)',
+                textDecoration: 'none', fontWeight: 600,
                 padding: '8px 0',
+                cursor: resumeAvailable ? 'pointer' : 'not-allowed',
               }}
             >
               <FiDownload size={14} /> Download Resume

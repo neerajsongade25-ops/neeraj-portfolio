@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
 import { FiGithub, FiLinkedin, FiMail, FiDownload, FiArrowRight } from 'react-icons/fi';
+import useResumeUrl from '../utils/useResumeUrl';
 
 const Hero = () => {
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const { resumeUrl, resumeExists, error: resumeError } = useResumeUrl();
+  const resumeAvailable = resumeExists && resumeUrl;
 
   return (
     <section
@@ -159,20 +162,30 @@ const Hero = () => {
             Contact Me
           </motion.button>
           <motion.a
-            href="/resume.pdf"
-            download="Neeraj_Songade_Resume.pdf"
-            whileHover={{ scale: 1.05, y: -3 }}
+            href={resumeAvailable ? resumeUrl : undefined}
+            download={resumeAvailable ? 'Neeraj_Songade_Resume.pdf' : undefined}
+            target={resumeAvailable ? '_blank' : undefined}
+            rel="noopener noreferrer"
+            onClick={!resumeAvailable ? (e) => e.preventDefault() : undefined}
+            whileHover={resumeAvailable ? { scale: 1.05, y: -3 } : {}}
+            title={
+              resumeAvailable ? 'Download Resume'
+              : resumeError ? 'Resume unavailable — check admin panel'
+              : 'No resume uploaded yet'
+            }
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '12px 24px',
               borderRadius: '10px',
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.08)',
-              color: '#8892b0',
+              color: resumeAvailable ? '#8892b0' : 'rgba(136,146,176,0.4)',
               textDecoration: 'none',
               fontWeight: 600,
               fontSize: '0.95rem',
               transition: 'all 0.3s ease',
+              cursor: resumeAvailable ? 'pointer' : 'not-allowed',
+              opacity: resumeAvailable ? 1 : 0.5,
             }}
           >
             <FiDownload /> Resume

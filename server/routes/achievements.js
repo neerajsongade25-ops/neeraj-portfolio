@@ -38,12 +38,9 @@ router.get('/:id/certificate', async (req, res) => {
     }
 
     const isPdf = achievement.certificateResourceType === 'raw';
-    let certUrl = achievement.certificateUrl;
-
-    // Ensure .pdf extension so Cloudinary returns correct content-type
-    if (isPdf && !certUrl.toLowerCase().endsWith('.pdf')) {
-      certUrl += '.pdf';
-    }
+    // Use the stored URL as-is — Cloudinary already includes .pdf in the URL
+    // when format:'pdf' is set during upload. DO NOT append again.
+    const certUrl = achievement.certificateUrl;
 
     const safeName = achievement.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
     const filename = `${safeName}_Certificate${isPdf ? '.pdf' : ''}`;
@@ -51,8 +48,20 @@ router.get('/:id/certificate', async (req, res) => {
 
     const proto = certUrl.startsWith('https') ? require('https') : require('http');
     proto.get(certUrl, (upstream) => {
-      res.setHeader('Content-Type', isPdf ? 'application/pdf' : (upstream.headers['content-type'] || 'application/octet-stream'));
+      // If Cloudinary returns a non-200 (e.g. 404 because file was deleted), surface it clearly
+      if (upstream.statusCode !== 200) {
+        console.error(`Certificate fetch failed: Cloudinary returned ${upstream.statusCode} for ${certUrl}`);
+        return res.status(502).send(`Failed to fetch certificate (upstream: ${upstream.statusCode}).`);
+      }
+      const contentType = isPdf
+        ? 'application/pdf'
+        : (upstream.headers['content-type'] || 'application/octet-stream');
+      res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
+      // Forward Content-Length so browsers show a progress indicator
+      if (upstream.headers['content-length']) {
+        res.setHeader('Content-Length', upstream.headers['content-length']);
+      }
       upstream.pipe(res);
     }).on('error', (err) => {
       console.error('Certificate proxy error:', err.message);

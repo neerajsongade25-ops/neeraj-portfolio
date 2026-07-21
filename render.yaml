@@ -26,3 +26,7 @@ services:
         sync: false
       - key: CLIENT_URL
         sync: false
+      - key: NODEMAILER_USER
+        sync: false
+      - key: NODEMAILER_PASS
+        sync: false

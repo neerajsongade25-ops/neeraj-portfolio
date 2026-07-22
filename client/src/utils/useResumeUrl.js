@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getResumeStatus } from './api';
+import { getResumeStatus, API_BASE_URL } from './api';
 
 /**
- * Fetches the resume URL from the backend Cloudinary store.
- * Returns { resumeUrl, resumeExists, loading, error }.
+ * Fetches whether a resume is uploaded and returns a proxied download URL.
  *
- * States:
- *   resumeExists = true  → resume is uploaded, resumeUrl has the Cloudinary URL
- *   resumeExists = false → confirmed no resume uploaded (API said success:true, exists:false)
- *   error = true         → API call failed (Cloudinary not configured, server down, etc.)
+ * Why proxy? Cloudinary raw resource URLs return 401 when accessed directly
+ * from the browser. The server's /api/resume/download endpoint fetches the
+ * file server-to-server (no auth issues) and streams it to the client.
+ *
+ * Returns { resumeUrl, resumeExists, loading, error }
  */
 const useResumeUrl = () => {
   const [resumeUrl, setResumeUrl] = useState(null);
@@ -19,15 +19,16 @@ const useResumeUrl = () => {
   useEffect(() => {
     getResumeStatus()
       .then((res) => {
-        if (res.data?.success && res.data?.exists && res.data?.url) {
-          setResumeUrl(res.data.url);
+        if (res.data?.success && res.data?.exists) {
+          // Use our server proxy instead of the direct Cloudinary URL.
+          // This avoids the 401 Unauthorized that Cloudinary returns for raw
+          // resources when accessed directly from a browser.
+          const downloadUrl = `${API_BASE_URL}/resume/download`;
+          setResumeUrl(downloadUrl);
           setResumeExists(true);
         }
-        // else: success but no resume uploaded — stay at defaults (exists: false)
       })
       .catch(() => {
-        // API failed (server error, Cloudinary not configured, network issue)
-        // Don't silently disable the button — mark as error so we can show a tooltip
         setError(true);
       })
       .finally(() => setLoading(false));

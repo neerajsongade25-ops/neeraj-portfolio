@@ -36,7 +36,39 @@ router.get('/status', async (req, res) => {
   }
 });
 
-// POST /api/resume/upload — upload new resume (protected)
+// GET /api/resume/download — proxy the PDF through our server.
+// Cloudinary raw resources return 401 when accessed directly from the browser,
+// so we fetch server-to-server (no auth issues) and stream to the client.
+router.get('/download', async (req, res) => {
+  try {
+    const resume = await Resume.findOne().sort({ createdAt: -1 });
+    if (!resume) {
+      return res.status(404).json({ success: false, message: 'No resume uploaded.' });
+    }
+
+    const proto = resume.url.startsWith('https') ? require('https') : require('http');
+    proto.get(resume.url, (upstream) => {
+      if (upstream.statusCode !== 200) {
+        console.error(`Resume proxy: Cloudinary returned ${upstream.statusCode}`);
+        return res.status(502).send('Resume temporarily unavailable.');
+      }
+      noCache(res);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="Neeraj_Songade_Resume.pdf"');
+      if (upstream.headers['content-length']) {
+        res.setHeader('Content-Length', upstream.headers['content-length']);
+      }
+      upstream.pipe(res);
+    }).on('error', (err) => {
+      console.error('Resume proxy error:', err.message);
+      res.status(502).send('Failed to fetch resume.');
+    });
+  } catch (err) {
+    console.error('Resume download error:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // After Cloudinary upload, saves the real public_id + url to MongoDB.
 // Using MongoDB removes the need to guess the Cloudinary public_id format.
 router.post('/upload', authMiddleware, (req, res) => {

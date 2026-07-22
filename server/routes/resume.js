@@ -36,9 +36,12 @@ router.get('/status', async (req, res) => {
   }
 });
 
-// GET /api/resume/download — proxy the PDF through our server.
-// Cloudinary raw resources return 401 when accessed directly from the browser,
-// so we fetch server-to-server (no auth issues) and stream to the client.
+// GET /api/resume/download — generate a signed Cloudinary download URL and redirect.
+//
+// Why not direct streaming? Cloudinary redirects raw/upload URLs or returns 401
+// when accessed server-to-server without following redirects. Using
+// private_download_url() generates an authenticated API download URL
+// (api.cloudinary.com/v1_1/.../download?...signature...) that works with any client.
 router.get('/download', async (req, res) => {
   try {
     const resume = await Resume.findOne().sort({ createdAt: -1 });
@@ -46,26 +49,37 @@ router.get('/download', async (req, res) => {
       return res.status(404).json({ success: false, message: 'No resume uploaded.' });
     }
 
-    const proto = resume.url.startsWith('https') ? require('https') : require('http');
-    proto.get(resume.url, (upstream) => {
-      if (upstream.statusCode !== 200) {
-        console.error(`Resume proxy: Cloudinary returned ${upstream.statusCode}`);
-        return res.status(502).send('Resume temporarily unavailable.');
+    // private_download_url(publicId, format, opts) builds:
+    //   api.cloudinary.com/v1_1/{cloud}/raw/download?public_id=...&api_key=...&signature=...
+    // It embeds your Cloudinary credentials in the query params so the URL is self-authenticated.
+    //
+    // For raw resources, the format is part of the public_id (e.g. '...resume.pdf').
+    // private_download_url appends format as '.{format}', so we strip .pdf from the public_id
+    // and pass format:'pdf' separately to avoid getting '...resume.pdf.pdf'.
+    let publicIdForDownload = (resume.publicId || '').trim();
+    let format = null;
+    if (publicIdForDownload.toLowerCase().endsWith('.pdf')) {
+      publicIdForDownload = publicIdForDownload.slice(0, -4); // strip .pdf
+      format = 'pdf';
+    }
+
+    const signedUrl = cloudinary.utils.private_download_url(
+      publicIdForDownload,
+      format,
+      {
+        resource_type: 'raw',
+        type:          'upload',
+        attachment:    'Neeraj_Songade_Resume.pdf', // browser download filename
+        expires_at:    Math.floor(Date.now() / 1000) + 600, // valid 10 min
       }
-      noCache(res);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="Neeraj_Songade_Resume.pdf"');
-      if (upstream.headers['content-length']) {
-        res.setHeader('Content-Length', upstream.headers['content-length']);
-      }
-      upstream.pipe(res);
-    }).on('error', (err) => {
-      console.error('Resume proxy error:', err.message);
-      res.status(502).send('Failed to fetch resume.');
-    });
+    );
+
+    // Redirect the browser to the signed Cloudinary URL.
+    // The browser downloads the PDF directly — no bandwidth on our server.
+    return res.redirect(302, signedUrl);
   } catch (err) {
     console.error('Resume download error:', err.message);
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 

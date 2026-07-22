@@ -52,8 +52,8 @@ export const getMessages = () => API.get('/contact/messages');
 export const markMessageRead = (id) => API.patch(`/contact/messages/${id}/read`);
 export const deleteMessage = (id) => API.delete(`/contact/messages/${id}`);
 
-// Resume
-export const getResumeStatus = () => API.get('/resume/status');
+// Resume — always add a timestamp param to prevent browser caching the status check
+export const getResumeStatus = () => API.get(`/resume/status?_t=${Date.now()}`);
 export const uploadResume = (file) => {
   const formData = new FormData();
   formData.append('resume', file);

@@ -25,8 +25,8 @@ router.get('/status', async (req, res) => {
     if (err.http_code === 404 || err.error?.http_code === 404) {
       return res.json({ success: true, exists: false });
     }
-    console.error('Cloudinary resume check error:', err.message);
-    return res.status(500).json({ success: false, message: 'Failed to check resume status.' });
+    console.error('Cloudinary resume check error:', err.error || err.message || err);
+    return res.status(500).json({ success: false, message: err.error?.message || err.message || 'Failed to check resume status.' });
   }
 });
 
